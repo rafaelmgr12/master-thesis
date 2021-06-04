@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 '''
-This script contains metrics to ensure the quality of photmoetric redshift estimation in this work teste
+This script contains metrics to ensure the quality of photmoetric redshift estimation in this work
 '''
 
 
@@ -10,9 +10,9 @@ def bias(z_phot, z_spec):
             The bias measures the deviation of the estimated photometric redshift from the true(i.e., the spetroscopic redshift)
     '''
 
-    b = np.abs((z_phot-z_spec)/(1+z_spec))
-
+    b = ((z_phot-z_spec)/(1+z_spec))
     return b
+
 
 def scatter(z_phot, z_spec):
     '''
@@ -20,12 +20,13 @@ def scatter(z_phot, z_spec):
     '''
     square = (((((z_phot-z_spec)/(1+z_spec))**2)))
     sigma = (square)
-         
+
     return sigma
+
 
 def scatter_scalar(z_phot, z_spec):
     '''
-            The scatter between the true redshift and the photometric redshift
+    The scatter between the true redshift and the photometric redshift
     '''
     sigma = np.sqrt(np.mean((np.abs(((z_phot-z_spec)/(1+z_spec))**2))))
 
@@ -47,9 +48,9 @@ def compute_metrics(y_true, y_pred, clf_name):
     result.loc["bias"] = np.mean(bias(y_pred, y_true))
     fr = fraction_retained(y_true, y_pred, 0.15)
     result.loc["fr015"] = np.mean(fr)
-    sigma = sigma68(y_true, y_pred)
+    sigma = sigma68_vec(y_true, y_pred)
 
-    result.loc["sigma68"] = sigma
+    result.loc["sigma68"] = sigma68_vec(y_true, y_pred)
 
     result.name = clf_name
     return result
@@ -60,25 +61,6 @@ def fraction_retained(y_true, y_pred, e):
     return fr
 
 
-def sigma68(y_true, y_pred):
-    error = y_pred - y_true
-    err = np.sort(error)
-    sigma68 = (int(len(error)*0.159), int(len(error)*(1-0.159)))
-    sig68_1 = round(err[sigma68[0]], 8)
-    sig68_2 = round(err[sigma68[1]], 8)
-
-    return(sig68_1, sig68_2)
-
-def sigma68_vec(y_true, y_pred):
-    error = y_pred - y_true
-    err = np.sort(error)
-    sigma68 = (int(len(error)*0.159), int(len(error)*(1-0.159)))
-    sig68_1 = round(err[sigma68[0]], 8)
-    sig68_2 = round(err[sigma68[1]], 8)
-
-
-    return err[sigma68[0]:sigma68[1]]
-
 def chi_squared(y_true, y_pred):
     num = (y_true - y_pred)**2
     quo = y_true + y_pred
@@ -88,9 +70,30 @@ def chi_squared(y_true, y_pred):
 
 def mc_cdf(cdf, bins):
     '''Monte Carlo Cumalative sampling'''
+
     rand = np.random.random()
     ind = np.where(cdf > rand)
-    frac = (rand-cdf[ind[0][0]-1])/(cdf[ind[0][0]]-cdf[ind[0][0]-1])
-    # print(frac)
-    zfinal = bins[ind[0][0]-1] + frac*(bins[ind[0][0]]-bins[ind[0][0]-1])
-    return zfinal, rand, cdf[ind[0][0]-1], cdf[ind[0][0]]
+    if len(ind[0]) >= 2:
+        frac = (rand-cdf[ind[0][0]-1])/(cdf[ind[0][0]]-cdf[ind[0][0]-1])
+        zfinal = bins[ind[0][0]-1] + frac*(bins[ind[0][0]]-bins[ind[0][0]-1])
+        return zfinal, rand, cdf[ind[0][0]-1], cdf[ind[0][0]]
+    else:
+        rand = np.random.random()
+        ind = np.where(cdf > rand)
+        while(len(ind[0]) == 0):
+            rand = np.random.random()
+            ind = np.where(cdf >= rand)
+        frac = (rand-cdf[ind[0][0]-1])/(cdf[ind[0][0]]-cdf[ind[0][0]-1])
+        zfinal = bins[ind[0][0]-1] + frac*(bins[ind[0][0]]-bins[ind[0][0]-1])
+        return zfinal, rand, cdf[ind[0][0]-1], cdf[ind[0][0]]
+
+
+def sigma68_vec(y_true, y_pred):
+
+    error = y_true - y_pred
+    error = np.sort(error)
+    sigma68 = (int(len(error)*0.159), int(len(error)*(1-0.159)))
+    sig68_1 = round(error[sigma68[0]], 8)
+    sig68_2 = round(error[sigma68[1]], 8)
+    total = (abs(sig68_1)+abs(sig68_2))/2
+    return total

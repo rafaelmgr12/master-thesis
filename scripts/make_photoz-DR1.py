@@ -38,7 +38,6 @@ print("Reading the data")
 print("/n/n")
 path = "/home/rafael/master-thesis/data/vipers.fits"
 data = Table.read(path).to_pandas()
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 
 ###################################################################################################################################################################
@@ -98,7 +97,7 @@ y_total = y_total.toarray()
 X = np.concatenate((X, data[['MAG_AUTO_G_DERED', 'MAG_AUTO_R_DERED',
                    'MAG_AUTO_I_DERED', 'MAG_AUTO_Z_DERED', 'MAG_AUTO_Y_DERED', ]].values), axis=1)
 
-X_train, X_test, y_train, y_test = ml.tts_split(X, y_total, 0.3, 5)
+#X_train, X_test, y_train, y_test = ml.tts_split(X, y_total, 0.3, 5)
 
 ########################################################################################################################################################################
 ####################### Declaring the NN ######################################################################################################################
@@ -131,8 +130,8 @@ model.compile(
     optimizer=ks.optimizers.Nadam(),
     metrics={'pdf': "acc",
              'reg': "mse"})
-history = model.fit(X_train[:, :5], {
-                    'pdf': y_train[:, :200], 'reg': y_train[:, 200]}, batch_size=128, epochs=256, validation_split=0.2)
+history = model.fit(X[:, :5], {
+                    'pdf': y_total[:, :200], 'reg': y_total[:, 200]}, batch_size=128, epochs=100, validation_split=0.2)
 
 #########################################################################################################################################################################################
 ####################### Createe the photometric z the NN ######################################################################################################################
@@ -201,9 +200,9 @@ for i in filename:
 maxIter = 500                  # maximum number of iterations [default=200]
 # maximum iterations to attempt if there is no progress on the validation set [default=infinity]
 maxAttempts = 50
-trainSplit = 0.5               # percentage of data to use for training
+trainSplit = 0.8               # percentage of data to use for training
 validSplit = 0.2               # percentage of data to use for validation
-testSplit = 0.3               # percentage of data to use for testing
+testSplit = 0              # percentage of data to use for testing
 
 #data = vipers
 

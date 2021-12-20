@@ -1,6 +1,7 @@
 ######################################################################################################################################################################################
 # This scripts, compute the photo-z for DES DR2 X VIPERS
 ######################################################################################################################################################################################
+import ml_algorithims as ml
 from scipy.sparse import hstack, vstack
 
 from sklearn.model_selection import train_test_split, ShuffleSplit
@@ -29,7 +30,6 @@ import os
 home = os.getenv("HOME")
 # user here the path where we download the folder PHTOzxcorr
 sys.path.append(home+"/master-thesis/functions/")
-import ml_algorithims as ml
 
 # Neural Network Libs
 
@@ -38,7 +38,7 @@ print("Reading the data")
 print("/n/n")
 path = "/media/new-drive/optical-data/DESzxcorr/pycode/DR2-match.fits"
 data = Table.read(path).to_pandas()
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 vipers = data[data["source"] == b'VIPERS'].copy()
 
@@ -198,7 +198,58 @@ for i in filename:
 
 #######################################################################################################################################################################
 ##### GPz photo-z #########################################################################################################
+print("Reading the data")
+print("/n/n")
+path = "/media/new-drive/optical-data/DESzxcorr/pycode/DR2-match.fits"
+data = Table.read(path).to_pandas()
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+vipers = data[data["source"] == b'VIPERS'].copy()
+
+data = vipers
+###################################################################################################################################################################
+###################### Data Preprocessing #########################################################################################################################
+feat = ['MAG_AUTO_G', 'MAG_AUTO_R', 'MAG_AUTO_I', 'MAG_AUTO_Z', 'MAG_AUTO_Y',
+        'MAG_AUTO_G_DERED', 'MAG_AUTO_R_DERED', 'MAG_AUTO_I_DERED', 'MAG_AUTO_Z_DERED', 'MAG_AUTO_Y_DERED',
+        "WAVG_MAG_PSF_G", "WAVG_MAG_PSF_R", "WAVG_MAG_PSF_I", "WAVG_MAG_PSF_Z", "WAVG_MAG_PSF_Y", 'WAVG_MAG_PSF_G_DERED', 'WAVG_MAG_PSF_R_DERED', 'WAVG_MAG_PSF_I_DERED', 'WAVG_MAG_PSF_Z_DERED', 'WAVG_MAG_PSF_Y_DERED']
+
+data.loc[data[feat[0]] == 99, feat[0]
+         ] = data[data[feat[0]] != 99][feat[0]].max()
+data.loc[data[feat[1]] == 99, feat[1]
+         ] = data[data[feat[1]] != 99][feat[1]].max()
+data.loc[data[feat[2]] == 99, feat[2]
+         ] = data[data[feat[2]] != 99][feat[2]].max()
+data.loc[data[feat[3]] == 99, feat[3]
+         ] = data[data[feat[3]] != 99][feat[3]].max()
+data.loc[data[feat[4]] == 99, feat[4]
+         ] = data[data[feat[4]] != 99][feat[4]].max()
+data.loc[data[feat[5]] > 90, feat[5]] = data[data[feat[5]] < 90][feat[5]].max()
+data.loc[data[feat[6]] > 90, feat[6]] = data[data[feat[6]] < 90][feat[6]].max()
+data.loc[data[feat[7]] > 90, feat[7]] = data[data[feat[7]] < 90][feat[7]].max()
+data.loc[data[feat[8]] > 90, feat[8]] = data[data[feat[8]] < 90][feat[8]].max()
+data.loc[data[feat[9]] > 90, feat[9]] = data[data[feat[9]] < 90][feat[9]].max()
+data.loc[data[feat[10]] > 90, feat[10]
+         ] = data[data[feat[10]] < 90][feat[10]].max()
+data.loc[data[feat[11]] > 90, feat[11]
+         ] = data[data[feat[11]] < 90][feat[11]].max()
+data.loc[data[feat[12]] > 90, feat[12]
+         ] = data[data[feat[12]] < 90][feat[12]].max()
+data.loc[data[feat[13]] > 90, feat[13]
+         ] = data[data[feat[13]] < 90][feat[13]].max()
+data.loc[data[feat[14]] > 90, feat[14]
+         ] = data[data[feat[14]] < 90][feat[14]].max()
+data.loc[data[feat[15]] > 90, feat[15]
+         ] = data[data[feat[15]] < 90][feat[15]].max()
+data.loc[data[feat[16]] > 90, feat[16]
+         ] = data[data[feat[16]] < 90][feat[16]].max()
+data.loc[data[feat[17]] > 90, feat[17]
+         ] = data[data[feat[17]] < 90][feat[17]].max()
+data.loc[data[feat[18]] > 90, feat[18]
+         ] = data[data[feat[18]] < 90][feat[18]].max()
+data.loc[data[feat[19]] > 90, feat[19]
+         ] = data[data[feat[19]] < 90][feat[19]].max()
+############################################################################################################################################################
+############################################################################################################################################################
 maxIter = 500                  # maximum number of iterations [default=200]
 # maximum iterations to attempt if there is no progress on the validation set [default=infinity]
 maxAttempts = 50

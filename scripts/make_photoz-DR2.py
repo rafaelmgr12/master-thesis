@@ -1,13 +1,12 @@
 ######################################################################################################################################################################################
 # This scripts, compute the photo-z for DES DR2 X VIPERS
 ######################################################################################################################################################################################
-import ml_algorithims as ml
 from scipy.sparse import hstack, vstack
 
 from sklearn.model_selection import train_test_split, ShuffleSplit
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-import GPz
-import astroFunctions as astro
+
+# Neural Network Libs
 from sklearn.preprocessing import KBinsDiscretizer
 from tensorflow.keras import regularizers
 from tensorflow.keras import layers
@@ -27,64 +26,50 @@ from astropy.table import Table, QTable
 import matplotlib.pyplot as plt
 import sys
 import os
-home = os.getenv("HOME")
 # user here the path where we download the folder PHTOzxcorr
-sys.path.append(home+"/master-thesis/functions/")
-
-# Neural Network Libs
+sys.path.append("../functions/")
+import astroFunctions as astro
+import GPz
+import ml_algorithims as ml
 
 
 print("Reading the data")
 print("/n/n")
 path = "/media/new-drive/optical-data/DESzxcorr/pycode/DR2-match.fits"
 data = Table.read(path).to_pandas()
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
 vipers = data[data["source"] == b'VIPERS'].copy()
-
 data = vipers
+path_new = '/media/new-drive/optical-data/DES-photoz2'
 ###################################################################################################################################################################
 ###################### Data Preprocessing #########################################################################################################################
 feat = ['MAG_AUTO_G', 'MAG_AUTO_R', 'MAG_AUTO_I', 'MAG_AUTO_Z', 'MAG_AUTO_Y',
         'MAG_AUTO_G_DERED', 'MAG_AUTO_R_DERED', 'MAG_AUTO_I_DERED', 'MAG_AUTO_Z_DERED', 'MAG_AUTO_Y_DERED',
         "WAVG_MAG_PSF_G", "WAVG_MAG_PSF_R", "WAVG_MAG_PSF_I", "WAVG_MAG_PSF_Z", "WAVG_MAG_PSF_Y", 'WAVG_MAG_PSF_G_DERED', 'WAVG_MAG_PSF_R_DERED', 'WAVG_MAG_PSF_I_DERED', 'WAVG_MAG_PSF_Z_DERED', 'WAVG_MAG_PSF_Y_DERED']
-
-data.loc[data[feat[0]] == 99, feat[0]
-         ] = data[data[feat[0]] != 99][feat[0]].max()
-data.loc[data[feat[1]] == 99, feat[1]
-         ] = data[data[feat[1]] != 99][feat[1]].max()
-data.loc[data[feat[2]] == 99, feat[2]
-         ] = data[data[feat[2]] != 99][feat[2]].max()
-data.loc[data[feat[3]] == 99, feat[3]
-         ] = data[data[feat[3]] != 99][feat[3]].max()
-data.loc[data[feat[4]] == 99, feat[4]
-         ] = data[data[feat[4]] != 99][feat[4]].max()
-data.loc[data[feat[5]] > 90, feat[5]] = data[data[feat[5]] < 90][feat[5]].max()
-data.loc[data[feat[6]] > 90, feat[6]] = data[data[feat[6]] < 90][feat[6]].max()
-data.loc[data[feat[7]] > 90, feat[7]] = data[data[feat[7]] < 90][feat[7]].max()
-data.loc[data[feat[8]] > 90, feat[8]] = data[data[feat[8]] < 90][feat[8]].max()
-data.loc[data[feat[9]] > 90, feat[9]] = data[data[feat[9]] < 90][feat[9]].max()
-data.loc[data[feat[10]] > 90, feat[10]
-         ] = data[data[feat[10]] < 90][feat[10]].max()
-data.loc[data[feat[11]] > 90, feat[11]
-         ] = data[data[feat[11]] < 90][feat[11]].max()
-data.loc[data[feat[12]] > 90, feat[12]
-         ] = data[data[feat[12]] < 90][feat[12]].max()
-data.loc[data[feat[13]] > 90, feat[13]
-         ] = data[data[feat[13]] < 90][feat[13]].max()
-data.loc[data[feat[14]] > 90, feat[14]
-         ] = data[data[feat[14]] < 90][feat[14]].max()
-data.loc[data[feat[15]] > 90, feat[15]
-         ] = data[data[feat[15]] < 90][feat[15]].max()
-data.loc[data[feat[16]] > 90, feat[16]
-         ] = data[data[feat[16]] < 90][feat[16]].max()
-data.loc[data[feat[17]] > 90, feat[17]
-         ] = data[data[feat[17]] < 90][feat[17]].max()
-data.loc[data[feat[18]] > 90, feat[18]
-         ] = data[data[feat[18]] < 90][feat[18]].max()
-data.loc[data[feat[19]] > 90, feat[19]
-         ] = data[data[feat[19]] < 90][feat[19]].max()
-
+data.loc[data[feat[0]]==99,feat[0]] = data[data[feat[0]]!=99][feat[0]].max()
+data.loc[data[feat[1]]==99,feat[1]] = data[data[feat[1]]!=99][feat[1]].max()
+data.loc[data[feat[2]]==99,feat[2]] = data[data[feat[2]]!=99][feat[2]].max()
+data.loc[data[feat[3]]==99,feat[3]] = data[data[feat[3]]!=99][feat[3]].max()
+data.loc[data[feat[4]]==99,feat[4]] = data[data[feat[4]]!=99][feat[4]].max()
+data.loc[data[feat[5]]>90,feat[5]] = data[data[feat[5]]<90][feat[5]].max()
+data.loc[data[feat[6]]>90,feat[6]] = data[data[feat[6]]<90][feat[6]].max()
+data.loc[data[feat[7]]>90,feat[7]] = data[data[feat[7]]<90][feat[7]].max()
+data.loc[data[feat[8]]>90,feat[8]] = data[data[feat[8]]<90][feat[8]].max()
+data.loc[data[feat[9]]>90,feat[9]] = data[data[feat[9]]<90][feat[9]].max()
+data.loc[data[feat[10]]>90,feat[10]] = data[data[feat[10]]<90][feat[10]].max()
+data.loc[data[feat[11]]>90,feat[11]] = data[data[feat[11]]<90][feat[11]].max()
+data.loc[data[feat[12]]>90,feat[12]] = data[data[feat[12]]<90][feat[12]].max()
+data.loc[data[feat[13]]>90,feat[13]] = data[data[feat[13]]<90][feat[13]].max()
+data.loc[data[feat[14]]>90,feat[14]] = data[data[feat[14]]<90][feat[14]].max()
+data.loc[data[feat[15]]>90,feat[15]] = data[data[feat[15]]<90][feat[15]].max()
+data.loc[data[feat[16]]>90,feat[16]] = data[data[feat[16]]<90][feat[16]].max()
+data.loc[data[feat[17]]>90,feat[17]] = data[data[feat[17]]<90][feat[17]].max()
+data.loc[data[feat[18]]>90,feat[18]] = data[data[feat[18]]<90][feat[18]].max()
+data.loc[data[feat[19]]>90,feat[19]] = data[data[feat[19]]<90][feat[19]].max()
+values_mags = [33.55958938598633,
+               24.63819122314453,
+               23.94902992248535,
+               25.494186401367188,
+               30.62488555908203]
 ########################################################################################################################################################################
 ####################### Get features for training ######################################################################################################################
 print("Get features and Setting traning/n/n")
@@ -100,7 +85,7 @@ y_total = y_total.toarray()
 X = np.concatenate((X, data[['MAG_AUTO_G_DERED', 'MAG_AUTO_R_DERED',
                    'MAG_AUTO_I_DERED', 'MAG_AUTO_Z_DERED', 'MAG_AUTO_Y_DERED', ]].values), axis=1)
 
-X_train, X_test, y_train, y_test = ml.tts_split(X, y_total, 0.3, 5)
+#X_train, X_test, y_train, y_test = ml.tts_split(X, y_total, 0.3, 5)
 
 ########################################################################################################################################################################
 ####################### Declaring the NN ######################################################################################################################
@@ -125,131 +110,20 @@ x = Dense(10, kernel_initializer='normal',  kernel_constraint=max_norm(2.), acti
           bias_regularizer=regularizers.l2(1e-4), activity_regularizer=regularizers.l2(1e-5))(x)
 output1 = Dense(1, activation="linear", name="reg")(x)
 output2 = Dense(200, activation="softmax", name="pdf")(x)
-model = keras.Model(inputs=inputs, outputs=[output1, output2], name="rafael")
-model.compile(
+model_ann = keras.Model(inputs=inputs, outputs=[output1, output2], name="rafael")
+model_ann.compile(
     loss={'reg': 'mean_absolute_error',
           'pdf': keras.losses.CategoricalCrossentropy()}, loss_weights=[0.1, 0.9],
     optimizer=ks.optimizers.Adam(lr_schedule),
     metrics={'pdf': "acc",
              'reg': "mse"})
-history = model.fit(X_train[:, :5], {
-                    'pdf': y_train[:, :200], 'reg': y_train[:, 200]}, batch_size=128, epochs=256, validation_split=0.2)
+history = model_ann.fit(X[:, :5], {
+                    'pdf': y_total[:, :200], 'reg': y_total[:, 200]}, batch_size=128, epochs=256, validation_split=0.2)
 
-#########################################################################################################################################################################################
-####################### Createe the photometric z the NN ######################################################################################################################
-
-
-path = "/media/new-drive/optical-data/DESzxcorr/FITS/64"
-filename = os.listdir(path)
-path_new = "/media/new-drive/optical-data/DES-photoz2"
-
-for i in filename:
-    name = i[:17] + ".fits"
-    if not astro.ver_file(path_new, name):
-        data = Table.read(os.path.join(path, i)).to_pandas()
-        data.loc[data[feat[0]] == 99, feat[0]
-                 ] = data[data[feat[0]] != 99][feat[0]].max()
-        data.loc[data[feat[1]] == 99, feat[1]
-                 ] = data[data[feat[1]] != 99][feat[1]].max()
-        data.loc[data[feat[2]] == 99, feat[2]
-                 ] = data[data[feat[2]] != 99][feat[2]].max()
-        data.loc[data[feat[3]] == 99, feat[3]
-                 ] = data[data[feat[3]] != 99][feat[3]].max()
-        data.loc[data[feat[4]] == 99, feat[4]
-                 ] = data[data[feat[4]] != 99][feat[4]].max()
-        data.loc[data[feat[5]] > 90, feat[5]
-                 ] = data[data[feat[5]] < 90][feat[5]].max()
-        data.loc[data[feat[6]] > 90, feat[6]
-                 ] = data[data[feat[6]] < 90][feat[6]].max()
-        data.loc[data[feat[7]] > 90, feat[7]
-                 ] = data[data[feat[7]] < 90][feat[7]].max()
-        data.loc[data[feat[8]] > 90, feat[8]
-                 ] = data[data[feat[8]] < 90][feat[8]].max()
-        data.loc[data[feat[9]] > 90, feat[9]
-                 ] = data[data[feat[9]] < 90][feat[9]].max()
-        data.loc[data[feat[10]] > 90, feat[10]
-                 ] = data[data[feat[10]] < 90][feat[10]].max()
-        data.loc[data[feat[11]] > 90, feat[11]
-                 ] = data[data[feat[11]] < 90][feat[11]].max()
-        data.loc[data[feat[12]] > 90, feat[12]
-                 ] = data[data[feat[12]] < 90][feat[12]].max()
-        data.loc[data[feat[13]] > 90, feat[13]
-                 ] = data[data[feat[13]] < 90][feat[13]].max()
-        data.loc[data[feat[14]] > 90, feat[14]
-                 ] = data[data[feat[14]] < 90][feat[14]].max()
-        data.loc[data[feat[15]] > 90, feat[15]
-                 ] = data[data[feat[15]] < 90][feat[15]].max()
-        data.loc[data[feat[16]] > 90, feat[16]
-                 ] = data[data[feat[16]] < 90][feat[16]].max()
-        data.loc[data[feat[17]] > 90, feat[17]
-                 ] = data[data[feat[17]] < 90][feat[17]].max()
-        data.loc[data[feat[18]] > 90, feat[18]
-                 ] = data[data[feat[18]] < 90][feat[18]].max()
-        data.loc[data[feat[19]] > 90, feat[19]
-                 ] = data[data[feat[19]] < 90][feat[19]].max()
-        X = ml.get_features_targets_des3(data)
-
-        predictions = model.predict(X)
-        zphot = predictions[0].flatten()
-        data["ANN:zphot"] = zphot
-        DF = QTable.from_pandas(data)
-        DF.write("/media/new-drive/optical-data/DES-photoz2/"+i[:17]+".fits")
-        # data.to_csv("/media/new-drive/optical-data/DES-photz/"+i[:17]+".csv",index = False)
 
 #######################################################################################################################################################################
 ##### GPz photo-z #########################################################################################################
-print("Reading the data")
-print("/n/n")
-path = "/media/new-drive/optical-data/DESzxcorr/pycode/DR2-match.fits"
-data = Table.read(path).to_pandas()
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-vipers = data[data["source"] == b'VIPERS'].copy()
-
-data = vipers
-###################################################################################################################################################################
-###################### Data Preprocessing #########################################################################################################################
-feat = ['MAG_AUTO_G', 'MAG_AUTO_R', 'MAG_AUTO_I', 'MAG_AUTO_Z', 'MAG_AUTO_Y',
-        'MAG_AUTO_G_DERED', 'MAG_AUTO_R_DERED', 'MAG_AUTO_I_DERED', 'MAG_AUTO_Z_DERED', 'MAG_AUTO_Y_DERED',
-        "WAVG_MAG_PSF_G", "WAVG_MAG_PSF_R", "WAVG_MAG_PSF_I", "WAVG_MAG_PSF_Z", "WAVG_MAG_PSF_Y", 'WAVG_MAG_PSF_G_DERED', 'WAVG_MAG_PSF_R_DERED', 'WAVG_MAG_PSF_I_DERED', 'WAVG_MAG_PSF_Z_DERED', 'WAVG_MAG_PSF_Y_DERED']
-
-data.loc[data[feat[0]] == 99, feat[0]
-         ] = data[data[feat[0]] != 99][feat[0]].max()
-data.loc[data[feat[1]] == 99, feat[1]
-         ] = data[data[feat[1]] != 99][feat[1]].max()
-data.loc[data[feat[2]] == 99, feat[2]
-         ] = data[data[feat[2]] != 99][feat[2]].max()
-data.loc[data[feat[3]] == 99, feat[3]
-         ] = data[data[feat[3]] != 99][feat[3]].max()
-data.loc[data[feat[4]] == 99, feat[4]
-         ] = data[data[feat[4]] != 99][feat[4]].max()
-data.loc[data[feat[5]] > 90, feat[5]] = data[data[feat[5]] < 90][feat[5]].max()
-data.loc[data[feat[6]] > 90, feat[6]] = data[data[feat[6]] < 90][feat[6]].max()
-data.loc[data[feat[7]] > 90, feat[7]] = data[data[feat[7]] < 90][feat[7]].max()
-data.loc[data[feat[8]] > 90, feat[8]] = data[data[feat[8]] < 90][feat[8]].max()
-data.loc[data[feat[9]] > 90, feat[9]] = data[data[feat[9]] < 90][feat[9]].max()
-data.loc[data[feat[10]] > 90, feat[10]
-         ] = data[data[feat[10]] < 90][feat[10]].max()
-data.loc[data[feat[11]] > 90, feat[11]
-         ] = data[data[feat[11]] < 90][feat[11]].max()
-data.loc[data[feat[12]] > 90, feat[12]
-         ] = data[data[feat[12]] < 90][feat[12]].max()
-data.loc[data[feat[13]] > 90, feat[13]
-         ] = data[data[feat[13]] < 90][feat[13]].max()
-data.loc[data[feat[14]] > 90, feat[14]
-         ] = data[data[feat[14]] < 90][feat[14]].max()
-data.loc[data[feat[15]] > 90, feat[15]
-         ] = data[data[feat[15]] < 90][feat[15]].max()
-data.loc[data[feat[16]] > 90, feat[16]
-         ] = data[data[feat[16]] < 90][feat[16]].max()
-data.loc[data[feat[17]] > 90, feat[17]
-         ] = data[data[feat[17]] < 90][feat[17]].max()
-data.loc[data[feat[18]] > 90, feat[18]
-         ] = data[data[feat[18]] < 90][feat[18]].max()
-data.loc[data[feat[19]] > 90, feat[19]
-         ] = data[data[feat[19]] < 90][feat[19]].max()
-############################################################################################################################################################
-############################################################################################################################################################
 maxIter = 500                  # maximum number of iterations [default=200]
 # maximum iterations to attempt if there is no progress on the validation set [default=infinity]
 maxAttempts = 50
@@ -328,62 +202,47 @@ model.train(X.copy(), Y.copy(), omega=omega, training=training,
 ###################################################################################################################################################################
 ##################################################Create the GPz photo-z###################################################################################
 filename = os.listdir(path_new)
-for i in filename:
+for i in tqdm(filename):
     data = Table.read(os.path.join(path_new, i)).to_pandas()
-    data.loc[data[feat[0]] == 99, feat[0]
-             ] = data[data[feat[0]] != 99][feat[0]].max()
-    data.loc[data[feat[1]] == 99, feat[1]
-             ] = data[data[feat[1]] != 99][feat[1]].max()
-    data.loc[data[feat[2]] == 99, feat[2]
-             ] = data[data[feat[2]] != 99][feat[2]].max()
-    data.loc[data[feat[3]] == 99, feat[3]
-             ] = data[data[feat[3]] != 99][feat[3]].max()
-    data.loc[data[feat[4]] == 99, feat[4]
-             ] = data[data[feat[4]] != 99][feat[4]].max()
     data.loc[data[feat[5]] > 90, feat[5]
-             ] = data[data[feat[5]] < 90][feat[5]].max()
+                 ] = values_mags[0]
     data.loc[data[feat[6]] > 90, feat[6]
-             ] = data[data[feat[6]] < 90][feat[6]].max()
+                 ] = values_mags[1]
     data.loc[data[feat[7]] > 90, feat[7]
-             ] = data[data[feat[7]] < 90][feat[7]].max()
+                 ] = values_mags[2]
     data.loc[data[feat[8]] > 90, feat[8]
-             ] = data[data[feat[8]] < 90][feat[8]].max()
+                 ] = values_mags[3]
     data.loc[data[feat[9]] > 90, feat[9]
-             ] = data[data[feat[9]] < 90][feat[9]].max()
-    data.loc[data[feat[10]] > 90, feat[10]
-             ] = data[data[feat[10]] < 90][feat[10]].max()
-    data.loc[data[feat[11]] > 90, feat[11]
-             ] = data[data[feat[11]] < 90][feat[11]].max()
-    data.loc[data[feat[12]] > 90, feat[12]
-             ] = data[data[feat[12]] < 90][feat[12]].max()
-    data.loc[data[feat[13]] > 90, feat[13]
-             ] = data[data[feat[13]] < 90][feat[13]].max()
-    data.loc[data[feat[14]] > 90, feat[14]
-             ] = data[data[feat[14]] < 90][feat[14]].max()
-    data.loc[data[feat[15]] > 90, feat[15]
-             ] = data[data[feat[15]] < 90][feat[15]].max()
-    data.loc[data[feat[16]] > 90, feat[16]
-             ] = data[data[feat[16]] < 90][feat[16]].max()
-    data.loc[data[feat[17]] > 90, feat[17]
-             ] = data[data[feat[17]] < 90][feat[17]].max()
-    data.loc[data[feat[18]] > 90, feat[18]
-             ] = data[data[feat[18]] < 90][feat[18]].max()
-    data.loc[data[feat[19]] > 90, feat[19]
-             ] = data[data[feat[19]] < 90][feat[19]].max()
+                 ] = values_mags[4]
+    # if the data has nan values
+    data[feat[5]].fillna(values_mags[0])
+    data[feat[6]].fillna(values_mags[1])
+    data[feat[7]].fillna(values_mags[2])
+    data[feat[8]].fillna(values_mags[3])
+    data[feat[9]].fillna(values_mags[4])
+
+    
+
+
     X = data[['MAG_AUTO_G_DERED', 'MAG_AUTO_R_DERED', 'MAG_AUTO_I_DERED',
               'MAG_AUTO_Z_DERED', 'MAG_AUTO_Y_DERED']].values
     err = data[["MAGERR_AUTO_G", "MAGERR_AUTO_R",
                 "MAGERR_AUTO_I", "MAGERR_AUTO_Z", "MAGERR_AUTO_Y"]].values
 
-    X = np.concatenate((X, err), axis=1)
-    if len(X) > 0:
+    X = np.concatenate((X, err), axis=1) 
+    mu, sigma, modelV, noiseV, PHI = model.predict(X.copy())
+    zphot = mu.flatten()
+    data["GPz:zphot"] = zphot
+    data["GPz:sigma"] = sigma.flatten()
+    #DF = QTable.from_pandas(data)
+    #DF.write("/media/new-drive/optical-data/DES-photoz2/" +
+    #         i[:17]+".fits", overwrite = True)
 
-        mu, sigma, modelV, noiseV, PHI = model.predict(X.copy())
+    X = ml.get_features_targets_des3(data)
+    predictions = model_ann.predict(X)
+    zphot = predictions[0].flatten()
+    data["ANN:zphot"] = zphot
+    
+    data.to_csv("/media/new-drive/optical-data/DES-photoz2/"+i[:17]+".csv",index = False)
 
-        zphot = mu.flatten()
-        data["GPz:zphot"] = zphot
-        data["GPz:sigma"] = sigma.flatten()
-        DF = QTable.from_pandas(data)
-        DF.write("/media/new-drive/optical-data/DES-photoz2/" +
-                 i[:17]+".fits")
-        # data.to_csv("/media/new-drive/optical-data/DES-photz/"+i[:17]+".csv",index = False)
+    del data,mu,sigma,modelV,noiseV,PHI
